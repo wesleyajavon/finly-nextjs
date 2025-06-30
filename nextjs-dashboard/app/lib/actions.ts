@@ -21,6 +21,16 @@ const FormSchema = z.object({
     }),
     date: z.string(),
 });
+
+const FormSchemaCustomer = z.object({
+  id: z.string(),
+  name: z.string({
+    message: 'Please enter a name.'
+  }),
+  email: z.string().email({
+    message: 'Please enter a valid email address.'
+  })
+})
 export type State = {
     errors?: {
         customerId?: string[];
@@ -30,8 +40,17 @@ export type State = {
     message?: string | null;
 };
 
+export type StateCustomer = {
+    errors?: {
+        name?: string[];
+        email?: string[];
+    };
+    message?: string | null;
+};
+
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+const CreateCustomer = FormSchemaCustomer.omit({ id: true });
 
 export async function createInvoice(prevState: State, formData: FormData) {
     const validatedFields = CreateInvoice.safeParse({
@@ -47,7 +66,6 @@ export async function createInvoice(prevState: State, formData: FormData) {
             message: 'Missing Fields. Failed to Create Invoice.',
         };
     }
-    console.log(validatedFields)
 
     // Prepare data for insertion into the database
     const { customerId, amount, status } = validatedFields.data;
@@ -69,6 +87,41 @@ export async function createInvoice(prevState: State, formData: FormData) {
 
     revalidatePath('/dashboard/invoices');
     redirect('/dashboard/invoices');
+}
+
+export async function createCustomer(prevState: StateCustomer, formData: FormData) {
+    const validatedFields = CreateCustomer.safeParse({
+        name: formData.get('name'),
+        email: formData.get('email'),
+    });
+
+    // If form validation fails, return errors early. Otherwise, continue.
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Missing Fields. Failed to Create Customer.',
+        };
+    }
+
+    // Prepare data for insertion into the database
+    const { name, email } = validatedFields.data;
+    const image_url = "/customers/nextjs-logo.png"
+
+    try {
+        await sql`
+    INSERT INTO customers (name, email, image_url)
+    VALUES (${name}, ${email}, ${image_url})
+  `;
+    } catch {
+        // We'll log the error to the console for now
+        return {
+            message: 'Database Error: Failed to Create Invoice.',
+
+        }
+    }
+
+    revalidatePath('/dashboard/customers');
+    redirect('/dashboard/customers');
 }
 
 export async function updateInvoice(

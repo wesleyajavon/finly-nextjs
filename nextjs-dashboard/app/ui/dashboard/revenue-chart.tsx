@@ -10,9 +10,15 @@ import { fetchRevenue } from '@/app/lib/data';
 // https://airbnb.io/visx/
 
  export default async function RevenueChart() { // Make component async, remove the props
-  const revenue = await fetchRevenue(); // Fetch data inside the component{
+  const revenue = await fetchRevenue(); 
   const chartHeight = 350;
-  // NOTE: Uncomment this code in Chapter 7
+  const monthOrder = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+revenue.sort(
+  (a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month)
+);
 
   const { yAxisLabels, topLabel } = generateYAxis(revenue);
 
