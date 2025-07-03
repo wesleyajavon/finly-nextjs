@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
+// import { prisma } from '@/app/lib/prisma'; // adjust this import to match your actual prisma setup
+import bcrypt from 'bcrypt';
 
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
@@ -186,4 +188,44 @@ export async function authenticate(
     }
     throw error;
   }
+}
+
+export async function register(prevState: string | undefined, formData: FormData) {
+  const name = formData.get('name') as string;
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+  const redirectTo = formData.get('redirectTo') as string || '/login';
+
+  if (!name || !email || !password || !confirmPassword) {
+    return 'Please fill in all required fields.';
+  }
+
+  if (password !== confirmPassword) {
+    return 'Passwords do not match.';
+  }
+
+  try {
+    const existingUser = await sql`
+      SELECT id FROM users WHERE email = ${email}
+    `;
+
+    if (existingUser.length > 0) {
+      return 'A user with this email already exists.';
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await sql`
+      INSERT INTO users (name, email, password)
+      VALUES (${name}, ${email}, ${hashedPassword})
+    `;
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    return 'An unexpected error occurred. Please try again.';
+  }
+
+      redirect(redirectTo);
+
 }

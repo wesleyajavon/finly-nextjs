@@ -11,6 +11,7 @@ import { Button } from './button';
 import { useActionState } from 'react';
 import { authenticate } from '@/app/lib/actions';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
@@ -71,6 +72,16 @@ export default function LoginForm() {
         <Button className="mt-4 w-full" aria-disabled={isPending}>
           Log in <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
+        <div className="mt-6 text-center text-sm text-gray-700">
+          Don't have an account yet?{' '}
+          <Link
+            href="/register"
+            className="font-semibold text-blue-600 hover:underline"
+          >
+            Register
+          </Link>
+        </div>
+
         <div className="flex h-8 items-end space-x-1">
           {/* Add form errors here */}
           {errorMessage && (
